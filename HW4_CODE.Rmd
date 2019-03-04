@@ -1,0 +1,32 @@
+---
+title: "HW4 Group5"
+author: "Shengchen Fu, Tianyi Zhou, Mduduzi Langwenya, Lin Wang, Yanxi Gao"
+date: "3/4/2019"
+output: word_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+#load packages
+library(tidyverse)
+library(knitr)
+library(readxl)
+library(readr)
+library(writexl)
+#load revenue data
+revenue<-read_csv("VTREVCODE16.csv")
+#load inpatient data
+inpatient<-read_csv("VTINP16_upd.csv")
+```
+
+```{r}
+#keep DRGs in [20:977]
+inpatient = inpatient %>% filter(DRG>=20 & DRG<=977)
+#drop revchrgs < 100
+revenue =  revenue %>% filter(REVCHRGS>=100) %>% rename(UNIQ = Uniq)
+#link impatient with revenue by UNIQ
+IP_REV = left_join(inpatient,revenue,by="UNIQ")
+#sum all the charges of each admission(UNIQ) by the PCCR category 
+PCCR_CHARGE = IP_REV %>% group_by(UNIQ,DRG,PCCR) %>% summarise(CHARGE = sum(REVCHRGS)) 
+```
+
