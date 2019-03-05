@@ -27,6 +27,21 @@ revenue =  revenue %>% filter(REVCHRGS>=100) %>% rename(UNIQ = Uniq)
 #link impatient with revenue by UNIQ
 IP_REV = left_join(inpatient,revenue,by="UNIQ")
 #sum all the charges of each admission(UNIQ) by the PCCR category 
-PCCR_CHARGE = IP_REV %>% group_by(UNIQ,DRG,PCCR) %>% summarise(CHARGE = sum(REVCHRGS)) 
+ADMI_CHARGE = IP_REV %>% group_by(UNIQ,DRG,PCCR) %>% summarise(CHARGE = sum(REVCHRGS)) 
+#sum by PCCR and DRG
+PCCR_CHARGE = ADMI_CHARGE %>%  group_by(DRG,PCCR) %>% summarise(mean_charge = mean(CHARGE))
+#plug in the PCCR name 
+PCCR_NAME <- read_excel("HS_2016VT_REVCODE_FILE_LAYOUT_and_CODES-2.xls", sheet = "PCCR")
+PCCR_NAME$PCCR = as.numeric(PCCR_NAME$PCCR)
+PCCR_CHARGE$PCCR = as.numeric(PCCR_CHARGE$PCCR)
+PCCR_CHARGE = left_join(PCCR_CHARGE,PCCR_NAME,by="PCCR")
+#plug in the DRG name
+DRG_NAME <- read_excel("HS_2016VT_PUF_FILE_LAYOUT_and_CODES.xls", sheet = "MSDRG 2007 forward")
+DRG_NAME = DRG_NAME %>% select(MSDRG,MSDRG_DESC) %>% rename(DRG = MSDRG, DRG_NAME = MSDRG_DESC)
+PCCR_CHARGE$DRG = as.numeric(PCCR_CHARGE$DRG)
+DRG_NAME$DRG = as.numeric(DRG_NAME$DRG)
+PCCR_CHARGE = left_join(PCCR_CHARGE,DRG_NAME,by="DRG")
+#conditional replacing the PCCR name
+PCCR_CHARGE = transform(PCCR_CHARGE, PCCR_NAME = ifelse(PCCR==3700|PCCR==4000,"PCCR_OR_and_Anesth_Costs",PCCR_NAME))
 ```
 
